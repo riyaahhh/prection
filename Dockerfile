@@ -1,8 +1,3 @@
-# =========================================================
-# Dockerfile for KrishiDrishti Forecasting API
-# Build:  docker build -t krishi-forecast-api .
-# Run:    docker run -p 8000:8000 krishi-forecast-api
-# =========================================================
 
 FROM python:3.11-slim
 
@@ -22,4 +17,6 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Render assigns its own port via the PORT env var at runtime.
+# Default to 8000 for local docker run, but respect $PORT when set.
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
