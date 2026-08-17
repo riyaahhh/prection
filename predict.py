@@ -68,33 +68,24 @@ def _load_arima_model(commodity):
 
 def _build_latest_feature_row(history_df):
     """
-    Build the single most-recent feature row needed for XGBoost prediction,
-    using the same feature logic as the training notebook.
+    Use the already-preprocessed latest feature row from the history CSV.
+
+    The history CSVs are generated from the same preprocessing pipeline
+    used during model training, so the engineered features should not be
+    recalculated here.
     """
     d = history_df.copy()
 
-    d["price_lag_1d"] = d["Modal_Price"].shift(1)
-    d["price_lag_7d"] = d["Modal_Price"].shift(7)
-    d["price_lag_14d"] = d["Modal_Price"].shift(14)
-    d["price_lag_30d"] = d["Modal_Price"].shift(30)
-
-    d["price_7d_avg"] = d["Modal_Price"].rolling(7).mean()
-    d["price_30d_avg"] = d["Modal_Price"].rolling(30).mean()
-
-    if "rainfall_mm" in d.columns:
-        d["rainfall_mm_7d_avg"] = d["rainfall_mm"].rolling(7).mean()
-        d["rainfall_mm_30d_avg"] = d["rainfall_mm"].rolling(30).mean()
-    if "temp_mean" in d.columns:
-        d["temp_mean_7d_avg"] = d["temp_mean"].rolling(7).mean()
-        d["temp_mean_30d_avg"] = d["temp_mean"].rolling(30).mean()
-
-    d["volatility_7d"] = d["Modal_Price"].rolling(7).std()
-    d["price_change_1d"] = d["Modal_Price"].pct_change(1)
+    # Ensure calendar features are available.
     d["month"] = d.index.month
     d["day_of_year"] = d.index.dayofyear
 
-    latest = d.iloc[[-1]]  # most recent row, as a 1-row DataFrame
+    # Take the most recent fully preprocessed row.
+    latest = d.iloc[[-1]]
+
+    # Keep only features expected by the trained XGBoost model.
     cols = [c for c in FEATURE_COLS if c in latest.columns]
+
     return latest[cols]
 
 
